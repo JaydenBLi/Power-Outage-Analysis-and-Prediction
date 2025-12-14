@@ -73,8 +73,23 @@ These side-by-side box plots display the relationship between the cause of the o
   
 The above table provides more detail on the relationship between outage cause and outage duration.  
   
-# Assessment of Missingness
-
+# Assessment of Missingness  
+### NMAR(Not Missing at Random) Analysis  
+**DEMAND.LOSS.MW**: small demand loss outages are less likely to have an accurately reported value; There may be too many 'small' outages for single one of them to be surveyed and reported. Thus, smaller losses are more likely to be missing, making the values for this column NMAR.  
+  
+### Missingness Dependency
+A permutation test was performed to test whether or not DEMAND.LOSS.MW depended on CUSTOMERS.AFFECTED, using the test statistic of the mean values of missing vs not missing. The attained p-value was **0.0005**. This provides very strong evidence that the missingness of DEMAND.LOSS.MW is not independent from CUSTOMERS.AFFECTED.  
+  
+<iframe
+  src="assets/fig_box_missingness.html"
+  width="800"
+  height="600"
+  frameborder="0"
+></iframe>  
+Although the difference in the box plots appears to be small, due to the nature of the log scale the difference is much larger than percieved. 
+  
+In addition, a second permuation test was performed comparing the missingness of DEMAND.LOSS.MW compared to OUTAGE.DURATION, finding a p-value of **0.7955**. This rather high p-value suggests that the missingness of DEMAND.LOSS.MW does not depend on OUTAGE.DURATION.
+  
 # Hypothesis Testing
 
 # Framing a Prediction Problem
