@@ -35,6 +35,7 @@ Some outages lacked a valid start timestamp due to incomplete reporting or syste
 
 ### Final Cleaned Dataset  
 Below is a table containing a few rows and columns of the cleaned dataset.  
+  
 |   YEAR |   MONTH | U.S._STATE   | OUTAGE.START        | OUTAGE.RESTORATION   |
 |-------:|--------:|:-------------|:--------------------|:---------------------|
 |   2011 |       7 | Minnesota    | 2011-07-01 17:00:00 | 2011-07-03 20:00:00  |
@@ -59,7 +60,7 @@ This is a histogram of the column 'CUSTOMERS.AFFECTED' in the dataset, with a lo
   frameborder="0"
 ></iframe>  
 These side-by-side box plots display the relationship between the cause of the outage and the duration of the outage. From this we can see clearly that the two variables are not independent, and that different outage causes have different impacts, and that fuel supply emergencies tend to be the most severe with the rest having less extreme differences.  
-    
+  
 | CAUSE.CATEGORY                |   count |   mean_duration |   median_duration |   max_duration |
 |:------------------------------|--------:|----------------:|------------------:|---------------:|
 | fuel supply emergency         |      50 |       13484     |            3960   |         108653 |
@@ -69,6 +70,7 @@ These side-by-side box plots display the relationship between the cause of the o
 | system operability disruption |     126 |         728.87  |             215   |          23187 |
 | islanding                     |      46 |         200.545 |              77.5 |           1254 |
 | intentional attack            |     418 |         429.98  |              56   |          21360 |
+  
 The above table provides more detail on the relationship between outage cause and outage duration.  
   
 # Assessment of Missingness
