@@ -1,3 +1,6 @@
 remote_theme: pages-themes/slate@v0.2.0
 plugins:
 - jekyll-remote-theme
+
+title: [Power-Outage-Analysis-and-Prediction]
+description: [This repo contains an analysis on the "Major Power Outage Risks in the U.S." dataset from Purdue University. This is a project for the DSC80 course at UCSD]
