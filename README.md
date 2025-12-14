@@ -91,11 +91,98 @@ Although the difference in the box plots appears to be small, due to the nature 
 In addition, a second permuation test was performed comparing the missingness of DEMAND.LOSS.MW compared to OUTAGE.DURATION, finding a p-value of **0.7955**. This rather high p-value suggests that the missingness of DEMAND.LOSS.MW does not depend on OUTAGE.DURATION.
   
 # Hypothesis Testing
+- H0: The distribution of outage durations with a cause of 'severe weather' is the same as the distribution of outage durations with a cause of 'equipment failure'  
+- Ha: 'severe weather' outages tend to have longer durations than 'equipment failure' outages.  
+Test Statistic: Difference in median of each  
+Significance level: <0.05  
+Observed statistic: 2239.0
+p-value: 0.0  
+  
+The observed difference in median outage duration between Severe Weather and Equipment Failure outages was substantial and positive.
+In a permutation test with 3,000 iterations, none of the permuted differences exceeded the observed difference.
+Therefore, we reject the null hypothesis and conclude that outages caused by severe weather tend to last longer than outages caused by equipment failure.  
 
-# Framing a Prediction Problem
-
-# Baseline Model
-
+# Framing a Prediction Problem  
+### Predicting the Number of Customers Affected by an Outage(Regression)  
+    
+- Response Variable: CUSTOMERS.AFFECTED  
+- Evaluation Metric: RMSE; the primary drawback of this loss function is that outliers are heavily affected. However, since we would be trying to estimate the number of affected customers to create a suitable response, it would be much better to "overreact" than to be underprepared to address the outage.  
+  
+There are certain variables we would be unable to use for this prediction problem. Any feature of our dataset that would be measured after the outage start time would be unavailable to those attempting to predict the severity of an ourage and therefore cannot be used in creating a model.  
+  
+# Baseline Model  
+A linear regression model was trained to predict CUSTOMERS.AFFECTED using only features available at the start of an outage. The model included three predictors:  
+  
+Quantitative (1): MONTH (passed through unchanged)  
+  
+Nominal (2): CAUSE.CATEGORY, NERC.REGION (both one-hot encoded)  
+  
+No ordinal features were used. All preprocessing (one-hot encoding) and model training were implemented inside a single sklearn Pipeline.  
+  
+Performance:  
+  
+Train RMSE: ~265,356  
+  
+Test RMSE: ~297,478  
+  
+The train/test gap is small, so the model generalizes reasonably, but the overall RMSE is large relative to the scale of outages. This indicates the baseline model underfits the data and is not very accurate, which is expected for a simple linear model with only a few features. It serves primarily as a starting benchmark for more complex models.  
+  
 # Final Model
+For my final model, I expanded the feature set and engineered additional transformed features to better capture structure in the data while keeping the model consistent with the information available at prediction time. In addition to the features used in the baseline model (MONTH, CAUSE.CATEGORY, NERC.REGION), I added:  
+  
+- YEAR, to capture long-term structural changes in grid infrastructure, population growth, and reporting practices that may influence the magnitude of outages over time.  
+  
+- NOMALY.LEVEL, which quantifies how unusual the climate conditions were during the outage period; outages occurring under extreme or anomalous climate conditions may affect larger areas and more customers.  
+  
+I also created two engineered numeric features using transformations applied within the pipeline:  
+  
+- Standardized (StandardScaler) versions of MONTH and YEAR  
+These help the model represent seasonal and long-term temporal effects on a common scale, which is appropriate because month and year operate on very different numeric ranges.  
+  
+- A quantile-transformed (QuantileTransformer) version of ANOMALY.LEVEL  
+Climate anomalies are highly skewed, with many mild events and fewer extreme values. Quantile transformation creates a more uniform distribution of this variable, helping the linear model learn smoother relationships.  
+  
+These transformations do not add information unavailable at prediction time; they simply reshape the existing numeric features into forms that expose patterns more clearly to the model.  
+  
+**Modeling Algorithm & Hyperparameter Choice**  
+  
+I chose Ridge Regression as the final model. It is a linear model like the baseline but includes L2 regularization, which stabilizes estimates in the presence of multicollinearity (expected here due to correlated geographic and climate variables) and prevents overly large coefficients.  
+  
+To determine the best level of regularization, I searched over different values of the alpha hyperparameter using GridSearchCV with 3-fold cross-validation. The best performing value was:  
+  
+- alpha = 100.0  
+  
+This represents a fairly strong level of regularization, which suggests that the raw and engineered features contain correlated or noisy relationships, and the model benefits from shrinking coefficient magnitudes.  
+  
+**Improvement Over the Baseline**  
+  
+The baseline model (ordinary least squares with minimal features) achieved:  
+  
+- Baseline train RMSE: ~265,356  
+  
+- Baseline test RMSE: ~297,478  
+  
+The final Ridge model achieved:  
+  
+- Final train RMSE: ~267,793  
+  
+- Final test RMSE: ~292,533  
+  
+Although the training error increased slightly—as expected when adding regularization—the test RMSE decreased, showing that the final model generalizes better than the baseline. The improvement is modest, but meaningful: the final model is less overfit and benefits from using richer features plus regularization to better capture the underlying structure in the outage data.  
+  
+This outcome is consistent with the data-generating process: customer impact depends on seasonal factors (MONTH), long-term trends (YEAR), climate anomalies (ANOMALY.LEVEL), and inherent differences across regions and causes. Including these effects while controlling model complexity results in improved prediction performance relative to the baseline.  
 
-# Fairness Analysis
+# Fairness Analysis  
+I examined whether my final regression model performs differently for outages caused by Severe Weather compared to those caused by Equipment Failure. These are two large, meaningful groups that reflect different physical mechanisms behind outages.  
+  
+Using the test set, I computed RMSE separately for the two groups:  
+  
+- RMSE_SevereWeather = 284264.991  
+  
+- RMSE_EquipmentFailure = 171952.096  
+  
+- Observed difference = 112312.894  
+  
+I then performed a permutation test, where I repeatedly shuffled the cause labels between these two groups and recomputed the RMSE difference under the null hypothesis that the model’s errors are unrelated to cause category. Out of 2000 permutations, the proportion with a difference at least as large as T_obs was **0.5155**  
+  
+This suggests that the observed RMSE difference can reasonably be explained by random variation, and I do not find strong evidence that the model is substantially less accurate for Severe Weather than for Equipment Failure outages.  
